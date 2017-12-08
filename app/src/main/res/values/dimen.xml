@@ -1,0 +1,4 @@
+<resources>
+    <dimen name="status_bar_height">24dp</dimen>
+    <dimen name="toolbar_elevation">4dp</dimen>
+</resources>
