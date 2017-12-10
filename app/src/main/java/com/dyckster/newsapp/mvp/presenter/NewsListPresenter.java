@@ -4,7 +4,6 @@ import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.dyckster.newsapp.model.DataList;
 import com.dyckster.newsapp.model.Document;
-import com.dyckster.newsapp.model.LoaderType;
 import com.dyckster.newsapp.mvp.view.NewsListView;
 import com.dyckster.newsapp.network.RetrofitService;
 
@@ -22,45 +21,73 @@ public class NewsListPresenter extends MvpPresenter<NewsListView> {
     private static final int PAGE_SIZE = 10;
 
     private int currentPage = FIRST_PAGE;
+    private long categoryId;
     private boolean isLoading = false;
     private boolean isLastPage = false;
 
     private List<Document> news = new ArrayList<>();
 
-    public void loadNews(long categoryId, int page) {
+    public void loadFirstPage(long categoryId) {
+        clearState();
+        this.categoryId = categoryId;
         isLoading = true;
-        LoaderType loaderType = currentPage == FIRST_PAGE ? LoaderType.SWIPE : LoaderType.FOOTER;
-        getViewState().switchLoader(loaderType, true);
+        getViewState().showLoadingProgress();
+        loadNextPage(FIRST_PAGE);
+    }
+
+    public void loadMoreNews() {
+        if (isLoading) return;
+        if (isLastPage) return;
+
+        getViewState().showLoadingMoreProgress();
+        loadNextPage(++currentPage);
+    }
+
+    private void loadNextPage(int page) {
         RetrofitService.INSTANCE.getNewsApi().getNews(categoryId, page)
                 .enqueue(new Callback<DataList<Document>>() {
                     @Override
                     public void onResponse(Call<DataList<Document>> call, Response<DataList<Document>> response) {
-                        getViewState().switchLoader(loaderType, false);
-                        isLoading = false;
-                        List<Document> moreNews = response.body().getItems();
-                        if (moreNews.isEmpty()) {
-                            isLastPage = true;
+                        if (response.isSuccessful()) {
+                            onShotsLoaded(response.body().getItems());
+                        } else {
+                            // TODO: 09.12.2017
                         }
-                        news.addAll(moreNews);
-                        getViewState().onNews(news);
                     }
 
                     @Override
                     public void onFailure(Call<DataList<Document>> call, Throwable t) {
-                        getViewState().switchLoader(loaderType, false);
-                        isLoading = false;
-
+                        onShotsLoadedError(t);
                     }
                 });
     }
 
-    public void loadNextPage(long categoryId) {
-        loadNews(categoryId, ++currentPage);
+
+    private void onShotsLoaded(List<Document> news) {
+        isLoading = false;
+        if (isFirstLoading()) {
+            getViewState().hideLoadingProgress();
+        } else {
+            getViewState().hideLoadingMoreProgress();
+        }
+
+        if (news.isEmpty() && isFirstLoading()) {
+            getViewState().showNoNewsLayout();
+        } else if (news.isEmpty()) {
+            isLastPage = true;
+        } else {
+            this.news.addAll(news);
+            getViewState().showNews(news, isFirstLoading());
+        }
     }
 
-    public void loadNews(long categoryId) {
-        clearState();
-        loadNews(categoryId, FIRST_PAGE);
+    private void onShotsLoadedError(Throwable throwable) {
+        isLoading = false;
+        // TODO: 10.12.2017
+    }
+
+    private boolean isFirstLoading() {
+        return currentPage == FIRST_PAGE;
     }
 
     private void clearState() {
@@ -70,14 +97,4 @@ public class NewsListPresenter extends MvpPresenter<NewsListView> {
         isLastPage = false;
     }
 
-    public boolean shouldLoadNextPage(int visibleItemCount, int firstVisibleItemPosition, int totalItemCount) {
-        if (!isLoading && !isLastPage) {
-            if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount
-                    && firstVisibleItemPosition >= 0
-                    && totalItemCount >= PAGE_SIZE) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

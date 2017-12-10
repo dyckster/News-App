@@ -1,6 +1,5 @@
 package com.dyckster.newsapp.ui;
 
-import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -18,10 +17,10 @@ import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.dyckster.newsapp.R;
 import com.dyckster.newsapp.model.Document;
-import com.dyckster.newsapp.model.LoaderType;
 import com.dyckster.newsapp.mvp.presenter.NewsListPresenter;
 import com.dyckster.newsapp.mvp.view.NewsListView;
-import com.dyckster.newsapp.ui.adapter.NewsAdapter;
+import com.dyckster.newsapp.ui.adapters.NewsAdapter;
+import com.dyckster.newsapp.util.EndlessRecyclerOnScrollListener;
 
 import java.util.List;
 
@@ -45,7 +44,10 @@ public class NewsFragment extends MvpAppCompatFragment implements
 
     private RecyclerView newsRecycler;
     private SwipeRefreshLayout refreshLayout;
+    private View noNetworkLayout;
+    private View noDataLayout;
 
+    private EndlessRecyclerOnScrollListener scrollListener;
     private NewsAdapter newsAdapter = new NewsAdapter();
 
     @Override
@@ -53,60 +55,89 @@ public class NewsFragment extends MvpAppCompatFragment implements
         View v = inflater.inflate(R.layout.fragment_news_list, container, false);
         categoryId = getArguments().getLong(ARGUMENT_CATEGORY_ID);
         initViews(v);
-        presenter.loadNews(categoryId);
+        presenter.loadFirstPage(categoryId);
         return v;
     }
 
     private void initViews(View rootView) {
         newsRecycler = rootView.findViewById(R.id.news_recycler);
-        newsRecycler.setLayoutManager(new LinearLayoutManager(getActivity()));
-        newsRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
+        newsRecycler.setLayoutManager(linearLayoutManager);
+        scrollListener = new EndlessRecyclerOnScrollListener(linearLayoutManager) {
             @Override
-            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                super.onScrolled(recyclerView, dx, dy);
-                int visibleItemCount = recyclerView.getLayoutManager().getChildCount();
-                int totalItemCount = recyclerView.getLayoutManager().getItemCount();
-                int firstVisibleItemPosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-                if (presenter.shouldLoadNextPage(visibleItemCount, firstVisibleItemPosition, totalItemCount)) {
-                    presenter.loadNextPage(categoryId);
-                }
+            public void onLoadMore() {
+                presenter.loadMoreNews();
             }
-        });
+        };
+        newsRecycler.addOnScrollListener(scrollListener);
+
         DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(getActivity(), DividerItemDecoration.VERTICAL);
         dividerItemDecoration.setDrawable(new ColorDrawable(ContextCompat.getColor(getActivity(), R.color.divider)));
         newsRecycler.addItemDecoration(dividerItemDecoration);
         newsRecycler.setAdapter(newsAdapter);
+        newsAdapter.setOnItemClickListener(this::openDetailsScreen);
 
         refreshLayout = rootView.findViewById(R.id.news_refresh);
-        refreshLayout.setOnRefreshListener(() -> presenter.loadNews(categoryId));
+        refreshLayout.setOnRefreshListener(this::refresh);
+
+        noNetworkLayout = rootView.findViewById(R.id.news_network_layout);
+        noNetworkLayout.setOnClickListener(view -> refresh());
+        noDataLayout = rootView.findViewById(R.id.news_empty_layout);
+        noDataLayout.setOnClickListener(view -> refresh());
+    }
+
+    private void refresh() {
+        scrollListener.reset();
+        presenter.loadFirstPage(categoryId);
     }
 
     @Override
-    public void onNews(List<Document> newsList) {
-        newsAdapter.buildNewsList(newsList);
-    }
-
-    @Override
-    public void onEmptyNews() {
-
-    }
-
-    @Override
-    public void onDataError() {
-
-    }
-
-    @Override
-    public void switchLoader(LoaderType loaderType, boolean show) {
-        switch (loaderType) {
-            case SWIPE:
-                refreshLayout.setRefreshing(show);
-                break;
-            case FOOTER:
-                newsAdapter.switchLoading(show);
-                break;
+    public void showNews(List<Document> news, boolean firstLoad) {
+        if (firstLoad) {
+            newsAdapter.replaceItems(news);
+        } else {
+            newsAdapter.addItems(news);
         }
     }
 
+    @Override
+    public void showLoadingProgress() {
+        refreshLayout.setRefreshing(true);
+    }
+
+    @Override
+    public void hideLoadingProgress() {
+        refreshLayout.setRefreshing(false);
+    }
+
+    @Override
+    public void showLoadingMoreProgress() {
+        newsAdapter.setLoadingMore(true);
+    }
+
+    @Override
+    public void hideLoadingMoreProgress() {
+        newsAdapter.setLoadingMore(false);
+    }
+
+    @Override
+    public void openDetailsScreen(long documentId) {
+
+    }
+
+    @Override
+    public void showNoNewsLayout() {
+        noDataLayout.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void showNoNetworkLayout() {
+        noNetworkLayout.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void hideNoNetworkLayout() {
+        noNetworkLayout.setVisibility(View.GONE);
+    }
 
 }
