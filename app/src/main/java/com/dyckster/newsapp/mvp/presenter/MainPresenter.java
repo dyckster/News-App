@@ -1,28 +1,49 @@
 package com.dyckster.newsapp.mvp.presenter;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
+import com.dyckster.newsapp.data.db.NewsDatabase;
+import com.dyckster.newsapp.data.network.NewsApi;
+import com.dyckster.newsapp.data.network.RetrofitService;
 import com.dyckster.newsapp.model.Category;
 import com.dyckster.newsapp.model.DataList;
 import com.dyckster.newsapp.mvp.view.MainView;
-import com.dyckster.newsapp.network.NewsApi;
-import com.dyckster.newsapp.network.RetrofitService;
+
+import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> {
 
-    private static final String TAG = "MainPresenter";
+    @Override
+    protected void onFirstViewAttach() {
+        super.onFirstViewAttach();
+        loadCategories(false);
+    }
 
-    public void loadCategories() {
-        //check for database
+    public void loadCategories(boolean forced) {
+        if (forced) {
+            loadCategoriesFromServer();
+        } else {
+            loadCategoriesFromDatabase();
+        }
+    }
+
+    private void loadCategoriesFromDatabase() {
+        List<Category> categoryList = NewsDatabase.getInstance().categoriesDao().getAll();
+        if (categoryList.isEmpty()) {
+            loadCategoriesFromServer();
+        } else {
+            getViewState().onCategories(categoryList);
+        }
+    }
+
+    private void loadCategoriesFromServer() {
         getViewState().switchLoader(true);
         RetrofitService.INSTANCE.getNewsApi().getCategories().enqueue(new Callback<DataList<Category>>() {
             @Override
@@ -38,17 +59,16 @@ public class MainPresenter extends MvpPresenter<MainView> {
                 if (response.body().getItems().isEmpty()) {
                     getViewState().onCategoriesError();
                 }
+
                 getViewState().onCategories(response.body().getItems());
             }
 
             @Override
             public void onFailure(Call<DataList<Category>> call, Throwable t) {
                 getViewState().switchLoader(false);
-                Log.e(TAG, "Failed to call:" + call.request().toString());
                 getViewState().onCategoriesError();
             }
         });
     }
-
 
 }

@@ -5,7 +5,7 @@ import com.arellomobile.mvp.MvpPresenter;
 import com.dyckster.newsapp.model.DataList;
 import com.dyckster.newsapp.model.Document;
 import com.dyckster.newsapp.mvp.view.NewsListView;
-import com.dyckster.newsapp.network.RetrofitService;
+import com.dyckster.newsapp.data.network.RetrofitService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +49,7 @@ public class NewsListPresenter extends MvpPresenter<NewsListView> {
                     @Override
                     public void onResponse(Call<DataList<Document>> call, Response<DataList<Document>> response) {
                         if (response.isSuccessful()) {
-                            onShotsLoaded(response.body().getItems());
+                            onPageLoaded(response.body().getItems());
                         } else {
                             // TODO: 09.12.2017
                         }
@@ -63,7 +63,7 @@ public class NewsListPresenter extends MvpPresenter<NewsListView> {
     }
 
 
-    private void onShotsLoaded(List<Document> news) {
+    private void onPageLoaded(List<Document> news) {
         isLoading = false;
         if (isFirstLoading()) {
             getViewState().hideLoadingProgress();

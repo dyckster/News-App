@@ -1,4 +1,4 @@
-package com.dyckster.newsapp.network;
+package com.dyckster.newsapp.data.network;
 
 import com.dyckster.newsapp.BuildConfig;
 import com.google.gson.Gson;

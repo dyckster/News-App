@@ -1,4 +1,4 @@
-package com.dyckster.newsapp.network;
+package com.dyckster.newsapp.data.network;
 
 import android.support.annotation.IntDef;
 

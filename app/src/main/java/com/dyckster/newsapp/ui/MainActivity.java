@@ -35,7 +35,6 @@ public class MainActivity extends MvpAppCompatActivity implements
         setContentView(R.layout.activity_main);
         initViews();
 
-        presenter.loadCategories();
     }
 
     private void initViews() {
