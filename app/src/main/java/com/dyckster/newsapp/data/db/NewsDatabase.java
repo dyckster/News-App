@@ -3,17 +3,19 @@ package com.dyckster.newsapp.data.db;
 import android.arch.persistence.room.Database;
 import android.arch.persistence.room.Room;
 import android.arch.persistence.room.RoomDatabase;
+import android.arch.persistence.room.TypeConverters;
 
 import com.dyckster.newsapp.NewsApplication;
 import com.dyckster.newsapp.model.Category;
 import com.dyckster.newsapp.model.Document;
 
-@Database(entities = {Document.class, Category.class}, version = 1)
+@Database(entities = {Document.class, Category.class}, version = 1, exportSchema = false)
+@TypeConverters({Converters.class})
 public abstract class NewsDatabase extends RoomDatabase {
 
     private static NewsDatabase instance;
 
-    public static final String DATABASE_NAME = "news-db";
+    private static final String DATABASE_NAME = "news-db";
 
     public static NewsDatabase getInstance() {
         if (instance == null) {

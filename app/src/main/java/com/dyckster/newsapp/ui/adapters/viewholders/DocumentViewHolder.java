@@ -28,7 +28,7 @@ public class DocumentViewHolder extends RecyclerView.ViewHolder {
         titleText.setText(document.getTitle());
         subtitleText.setText(document.getShortDescription());
         if (listener != null) {
-            listener.onNewsClick(document.getId());
+            itemView.setOnClickListener(view -> listener.onNewsClick(document.getId()));
         }
     }
 

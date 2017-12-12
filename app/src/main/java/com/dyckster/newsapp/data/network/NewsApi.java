@@ -5,6 +5,7 @@ import android.support.annotation.IntDef;
 import com.dyckster.newsapp.model.Category;
 import com.dyckster.newsapp.model.DataList;
 import com.dyckster.newsapp.model.Document;
+import com.dyckster.newsapp.model.NewsModel;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
@@ -25,5 +26,6 @@ public interface NewsApi {
     @GET("categories/{id}/news")
     Call<DataList<Document>> getNews(@Path("id") long categoryId, @Query("page") int page);
 
-    // TODO: 08.12.2017 Single document
+    @GET("details")
+    Call<NewsModel> getNewsDetails(@Query("id") long documentId);
 }

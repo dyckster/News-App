@@ -47,7 +47,6 @@
         android:id="@+id/news_network_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/colorWhite"
         android:gravity="center"
         android:orientation="vertical"
         android:paddingLeft="32dp"

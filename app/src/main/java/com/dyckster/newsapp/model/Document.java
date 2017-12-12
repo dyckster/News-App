@@ -3,13 +3,16 @@ package com.dyckster.newsapp.model;
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.ForeignKey;
-import android.arch.persistence.room.Ignore;
+import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
+import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import java.util.Date;
 
 @Entity(foreignKeys =
-@ForeignKey(entity = Category.class, parentColumns = "id", childColumns = "category_id"))
+@ForeignKey(entity = Category.class, parentColumns = "id", childColumns = "category_id")
+        , indices = {@Index(value = "category_id")})
 public class Document {
 
     @PrimaryKey
@@ -18,9 +21,10 @@ public class Document {
     private String title;
     @ColumnInfo(name = "short_description")
     private String shortDescription;
+    @Nullable
     @ColumnInfo(name = "full_description")
     private String fullDescription;
-    @Ignore
+    @ColumnInfo(name = "date")
     private Date date;
     @ColumnInfo(name = "category_id")
     private long categoryId;
@@ -76,4 +80,8 @@ public class Document {
 
 
     //endregion
+
+    public boolean hasFullInfo() {
+        return !TextUtils.isEmpty(fullDescription);
+    }
 }

@@ -1,6 +1,7 @@
 package com.dyckster.newsapp.mvp.presenter;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
@@ -20,13 +21,15 @@ import retrofit2.Response;
 @InjectViewState
 public class MainPresenter extends MvpPresenter<MainView> {
 
+    private static final String TAG = "MainPresenter";
+
     @Override
     protected void onFirstViewAttach() {
         super.onFirstViewAttach();
         loadCategories(false);
     }
 
-    public void loadCategories(boolean forced) {
+    private void loadCategories(boolean forced) {
         if (forced) {
             loadCategoriesFromServer();
         } else {
@@ -37,8 +40,10 @@ public class MainPresenter extends MvpPresenter<MainView> {
     private void loadCategoriesFromDatabase() {
         List<Category> categoryList = NewsDatabase.getInstance().categoriesDao().getAll();
         if (categoryList.isEmpty()) {
+            Log.d(TAG, "Loading categories from server");
             loadCategoriesFromServer();
         } else {
+            Log.d(TAG, "Loading categories from database");
             getViewState().onCategories(categoryList);
         }
     }
@@ -56,11 +61,13 @@ public class MainPresenter extends MvpPresenter<MainView> {
                 if (response.body().getCode() != NewsApi.ResponseCode.SUCCESS) {
                     getViewState().onCategoriesError();
                 }
-                if (response.body().getItems().isEmpty()) {
+                List<Category> categories = response.body().getItems();
+
+                if (categories.isEmpty()) {
                     getViewState().onCategoriesError();
                 }
-
-                getViewState().onCategories(response.body().getItems());
+                NewsDatabase.getInstance().categoriesDao().insertCategories(categories);
+                getViewState().onCategories(categories);
             }
 
             @Override

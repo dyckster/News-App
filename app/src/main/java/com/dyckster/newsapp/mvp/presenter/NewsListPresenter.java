@@ -1,15 +1,18 @@
 package com.dyckster.newsapp.mvp.presenter;
 
+import android.support.annotation.Nullable;
+
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
+import com.dyckster.newsapp.data.db.NewsDatabase;
+import com.dyckster.newsapp.data.network.RetrofitService;
 import com.dyckster.newsapp.model.DataList;
 import com.dyckster.newsapp.model.Document;
 import com.dyckster.newsapp.mvp.view.NewsListView;
-import com.dyckster.newsapp.data.network.RetrofitService;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Observable;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -18,16 +21,25 @@ import retrofit2.Response;
 public class NewsListPresenter extends MvpPresenter<NewsListView> {
 
     private static final int FIRST_PAGE = 0;
-    private static final int PAGE_SIZE = 10;
 
     private int currentPage = FIRST_PAGE;
     private long categoryId;
     private boolean isLoading = false;
     private boolean isLastPage = false;
 
-    private List<Document> news = new ArrayList<>();
+    private boolean fromCache = false;
 
-    public void loadFirstPage(long categoryId) {
+    public void loadNews(long categoryId, boolean forcedUpdate) {
+        List<Document> news = NewsDatabase.getInstance().newsDao().getDocumentsByCategory(categoryId);
+        if (news.isEmpty() || forcedUpdate) {
+            loadFirstPage(categoryId);
+        } else {
+            fromCache = true;
+            onNewsLoaded(news);
+        }
+    }
+
+    private void loadFirstPage(long categoryId) {
         clearState();
         this.categoryId = categoryId;
         isLoading = true;
@@ -38,6 +50,7 @@ public class NewsListPresenter extends MvpPresenter<NewsListView> {
     public void loadMoreNews() {
         if (isLoading) return;
         if (isLastPage) return;
+        if (fromCache) return;
 
         getViewState().showLoadingMoreProgress();
         loadNextPage(++currentPage);
@@ -49,9 +62,9 @@ public class NewsListPresenter extends MvpPresenter<NewsListView> {
                     @Override
                     public void onResponse(Call<DataList<Document>> call, Response<DataList<Document>> response) {
                         if (response.isSuccessful()) {
-                            onPageLoaded(response.body().getItems());
+                            onNewsLoaded(response.body().getItems());
                         } else {
-                            // TODO: 09.12.2017
+                            onShotsLoadedError(null);
                         }
                     }
 
@@ -63,7 +76,7 @@ public class NewsListPresenter extends MvpPresenter<NewsListView> {
     }
 
 
-    private void onPageLoaded(List<Document> news) {
+    private void onNewsLoaded(List<Document> news) {
         isLoading = false;
         if (isFirstLoading()) {
             getViewState().hideLoadingProgress();
@@ -76,14 +89,17 @@ public class NewsListPresenter extends MvpPresenter<NewsListView> {
         } else if (news.isEmpty()) {
             isLastPage = true;
         } else {
-            this.news.addAll(news);
+            if (!fromCache) {
+                Observable.fromIterable(news).forEach((document) -> document.setCategoryId(categoryId));
+                NewsDatabase.getInstance().newsDao().insertDocuments(news);
+            }
             getViewState().showNews(news, isFirstLoading());
         }
     }
 
-    private void onShotsLoadedError(Throwable throwable) {
+    private void onShotsLoadedError(@Nullable Throwable throwable) {
         isLoading = false;
-        // TODO: 10.12.2017
+        getViewState().hideLoadingProgress();
     }
 
     private boolean isFirstLoading() {
@@ -91,7 +107,6 @@ public class NewsListPresenter extends MvpPresenter<NewsListView> {
     }
 
     private void clearState() {
-        news.clear();
         currentPage = FIRST_PAGE;
         isLoading = false;
         isLastPage = false;

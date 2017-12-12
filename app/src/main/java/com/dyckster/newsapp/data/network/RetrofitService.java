@@ -1,9 +1,11 @@
 package com.dyckster.newsapp.data.network;
 
 import com.dyckster.newsapp.BuildConfig;
+import com.dyckster.newsapp.NewsApplication;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 

@@ -30,8 +30,8 @@ public class NewsAdapter extends LoadMoreAdapter<Document> {
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         if (holder instanceof DocumentViewHolder) {
-            ((DocumentViewHolder) holder).bind(getItem(position));
             ((DocumentViewHolder) holder).setOnNewsClickListener(listener);
+            ((DocumentViewHolder) holder).bind(getItem(position));
         }
     }
 

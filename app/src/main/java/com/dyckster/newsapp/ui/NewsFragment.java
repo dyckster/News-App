@@ -42,7 +42,6 @@ public class NewsFragment extends MvpAppCompatFragment implements
 
     private long categoryId;
 
-    private RecyclerView newsRecycler;
     private SwipeRefreshLayout refreshLayout;
     private View noNetworkLayout;
     private View noDataLayout;
@@ -55,12 +54,12 @@ public class NewsFragment extends MvpAppCompatFragment implements
         View v = inflater.inflate(R.layout.fragment_news_list, container, false);
         categoryId = getArguments().getLong(ARGUMENT_CATEGORY_ID);
         initViews(v);
-        presenter.loadFirstPage(categoryId);
+        presenter.loadNews(categoryId, false);
         return v;
     }
 
     private void initViews(View rootView) {
-        newsRecycler = rootView.findViewById(R.id.news_recycler);
+        RecyclerView newsRecycler = rootView.findViewById(R.id.news_recycler);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getActivity());
         newsRecycler.setLayoutManager(linearLayoutManager);
         scrollListener = new EndlessRecyclerOnScrollListener(linearLayoutManager) {
@@ -88,7 +87,7 @@ public class NewsFragment extends MvpAppCompatFragment implements
 
     private void refresh() {
         scrollListener.reset();
-        presenter.loadFirstPage(categoryId);
+        presenter.loadNews(categoryId, true);
     }
 
     @Override
@@ -122,7 +121,7 @@ public class NewsFragment extends MvpAppCompatFragment implements
 
     @Override
     public void openDetailsScreen(long documentId) {
-
+        DocumentActivity.start(getActivity(), documentId);
     }
 
     @Override

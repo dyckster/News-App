@@ -61,7 +61,7 @@ public class MainActivity extends MvpAppCompatActivity implements
 
     @Override
     public void onCategoriesError() {
-        Toast.makeText(this, "Error during request", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.err_categories_load, Toast.LENGTH_SHORT).show();
     }
 
     @Override

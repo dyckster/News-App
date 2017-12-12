@@ -10,7 +10,6 @@ public class LoadMoreViewHolder extends RecyclerView.ViewHolder {
 
     public LoadMoreViewHolder(LayoutInflater inflater, ViewGroup parent) {
         super(inflater.inflate(R.layout.item_loader, parent, false));
-
     }
 
 }

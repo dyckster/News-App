@@ -4,4 +4,7 @@
     <string name="cd_no_news">No news were found</string>
     <string name="cd_no_network">Device is not connected to the internet\nTap to refresh</string>
     <string name="txt_no_network">Device is not connected to internet\nTap to refresh</string>
+    <string name="cd_back">Back</string>
+    <string name="cd_share">Share</string>
+    <string name="err_categories_load">Failed to load categories</string>
 </resources>
